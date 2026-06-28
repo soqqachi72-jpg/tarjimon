@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>Tarjimon</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f1117;--s1:#181b26;--s2:#1e2130;--s3:#252840;--brd:#2c3050;--acc:#5b73f5;--acc2:#8fa3ff;--txt:#e6e9ff;--muted:#7880a8;--green:#3dd68c;--red:#f05252;--r:14px;--tab-h:52px}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden}
+#overlay{position:fixed;inset:0;z-index:999;background:rgba(8,9,15,.97);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;text-align:center;transition:opacity .35s}
+#overlay.gone{opacity:0;pointer-events:none}
+.ov-ring{width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,#4f6ef7,#9b55ff);display:flex;align-items:center;justify-content:center;font-size:38px;margin-bottom:22px;box-shadow:0 0 48px rgba(91,115,245,.45)}
+.ov-title{font-size:21px;font-weight:700;margin-bottom:10px}
+.ov-desc{font-size:14px;color:var(--muted);line-height:1.65;margin-bottom:26px;max-width:300px}
+.ov-desc b{color:var(--acc2)}
+.btn-sub{width:100%;max-width:320px;background:linear-gradient(135deg,#4f6ef7,#9b55ff);color:#fff;font-size:15px;font-weight:700;border:none;border-radius:14px;padding:14px 20px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 6px 24px rgba(91,115,245,.4);transition:transform .15s}
+.btn-sub:active{transform:scale(.97)}
+.btn-verify{margin-top:12px;width:100%;max-width:320px;background:var(--s2);color:var(--muted);font-size:13px;font-weight:600;border:1.5px solid var(--brd);border-radius:12px;padding:11px;cursor:pointer;transition:background .15s,color .15s}
+.btn-verify:hover{background:var(--s3);color:var(--txt)}
+.warn{margin-top:14px;font-size:12px;color:var(--red);display:none}
+.warn.on{display:block}
+#app{display:flex;flex-direction:column;min-height:100vh}
+header{padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between;background:var(--s1);border-bottom:1px solid var(--brd)}
+.hlogo{display:flex;align-items:center;gap:10px}
+.hicon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#4f6ef7,#9b55ff);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff}
+.htitle{font-size:16px;font-weight:700}
+.hsub{font-size:11px;color:var(--muted);margin-top:1px}
+.hbadge{font-size:11px;font-weight:700;letter-spacing:.05em;padding:4px 10px;border-radius:20px;background:rgba(61,214,140,.12);color:var(--green);border:1px solid rgba(61,214,140,.25)}
+.tab-bar{display:flex;background:var(--s1);border-bottom:1px solid var(--brd);padding:0 14px}
+.tab{flex:1;height:var(--tab-h);display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent;transition:color .2s,border-color .2s}
+.tab.on{color:var(--acc2);border-color:var(--acc)}
+.tab svg{width:16px;height:16px}
+.page{display:none;flex:1;flex-direction:column}
+.page.on{display:flex}
+main{flex:1;padding:16px 14px 24px;display:flex;flex-direction:column;gap:13px}
+.dir-bar{display:grid;grid-template-columns:1fr 42px 1fr;gap:8px;align-items:center}
+.dir-pill{background:var(--s2);border:1.5px solid var(--brd);border-radius:12px;padding:10px 8px;font-size:13px;font-weight:600;text-align:center;cursor:pointer;transition:border-color .2s,background .2s,color .2s;color:var(--muted)}
+.dir-pill.on{border-color:var(--acc);background:rgba(91,115,245,.12);color:var(--acc2)}
+.swap{width:42px;height:42px;border-radius:12px;background:var(--s2);border:1.5px solid var(--brd);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:background .15s,transform .25s}
+.swap:active{transform:rotate(180deg);background:var(--s3)}
+.card{background:var(--s1);border:1.5px solid var(--brd);border-radius:var(--r);padding:13px;display:flex;flex-direction:column;gap:9px}
+.clabel{font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+textarea{background:transparent;border:none;outline:none;color:var(--txt);font-family:'Inter',sans-serif;font-size:15px;line-height:1.65;resize:none;width:100%;min-height:90px}
+textarea::placeholder{color:var(--brd)}
+.cfoot{display:flex;align-items:center;justify-content:space-between}
+.ccount{font-size:11px;color:var(--muted)}
+.cbtn{font-size:12px;color:var(--muted);background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;transition:background .15s}
+.cbtn:hover{background:var(--s3);color:var(--txt)}
+.arrow-row{text-align:center;font-size:20px;color:var(--brd)}
+.res-wrap{background:var(--s1);border:1.5px solid var(--brd);border-radius:var(--r);overflow:hidden}
+.res-head{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;border-bottom:1px solid var(--brd)}
+.res-label{font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.copy-btn{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--acc2);background:rgba(91,115,245,.12);border:1px solid rgba(91,115,245,.25);border-radius:8px;padding:5px 10px;cursor:pointer;transition:background .15s}
+.copy-btn:active{background:rgba(91,115,245,.28)}
+.res-body{padding:13px;font-size:15px;line-height:1.65;min-height:76px;color:var(--txt);word-break:break-word}
+.ph{color:var(--brd);font-size:14px}
+.go-btn{background:linear-gradient(135deg,#4f6ef7,#9b55ff);color:#fff;font-size:15px;font-weight:700;border:none;border-radius:14px;padding:14px;cursor:pointer;width:100%;box-shadow:0 5px 22px rgba(91,115,245,.35);transition:transform .15s,box-shadow .15s;letter-spacing:.02em}
+.go-btn:active{transform:scale(.98);box-shadow:none}
+.go-btn:disabled{background:var(--s2);color:var(--muted);box-shadow:none;cursor:not-allowed}
+.lang-row{display:flex;align-items:center;gap:8px}
+.lang-sel{flex:1;background:var(--s2);border:1.5px solid var(--brd);border-radius:12px;padding:10px 12px;color:var(--txt);font-size:13px;font-weight:600;cursor:pointer;appearance:none;-webkit-appearance:none;outline:none}
+.lang-sel:focus{border-color:var(--acc)}
+.lang-swap{width:40px;height:40px;border-radius:11px;background:var(--s2);border:1.5px solid var(--brd);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;transition:background .15s,transform .25s}
+.lang-swap:active{transform:rotate(180deg)}
+.spinner{display:inline-block;width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.detect-badge{font-size:11px;color:var(--green);font-weight:600;padding:3px 8px;background:rgba(61,214,140,.1);border-radius:20px;border:1px solid rgba(61,214,140,.25)}
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(70px);background:var(--green);color:#0a1a10;font-size:13px;font-weight:700;padding:10px 22px;border-radius:30px;transition:transform .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:9999;white-space:nowrap}
+.toast.on{transform:translateX(-50%) translateY(0)}
+footer{padding:12px 18px;text-align:center;font-size:11px;color:var(--muted);border-top:1px solid var(--brd)}
+footer a{color:var(--acc2);text-decoration:none}
+</style>
+</head>
+<body>
+<div id="overlay">
+  <div class="ov-ring">🔒</div>
+  <div class="ov-title">Kanalga obuna bo'ling</div>
+  <div class="ov-desc">Tarjimondan foydalanish uchun<br><b>@seen_sms</b> kanaliga obuna bo'ling.<br><br>Obuna bo'lgach "Tekshirish" tugmasini bosing.</div>
+  <button class="btn-sub" onclick="openCh()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+    @seen_sms ga obuna bo'lish
+  </button>
+  <button class="btn-verify" id="vBtn" onclick="verify()">✅ Obuna bo'ldim — tekshirish</button>
+  <div class="warn" id="warn">⚠️ Siz hali obuna bo'lmagansiz!</div>
+</div>
+<div id="app">
+  <header>
+    <div class="hlogo">
+      <div class="hicon">Т</div>
+      <div><div class="htitle">Tarjimon</div><div class="hsub">Lotin · Kirill · Til tarjimasi</div></div>
+    </div>
+    <div class="hbadge">BEPUL</div>
+  </header>
+  <div class="tab-bar">
+    <div class="tab on" id="tab1" onclick="switchTab(1)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+      Alifbo o'girish
+    </div>
+    <div class="tab" id="tab2" onclick="switchTab(2)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      Til tarjimasi
+    </div>
+  </div>
+  <div class="page on" id="page1">
+    <main>
+      <div class="dir-bar">
+        <div class="dir-pill on" id="pL">🔤 Lotin</div>
+        <button class="swap" onclick="swap()">⇄</button>
+        <div class="dir-pill" id="pK">🔡 Kirill</div>
+      </div>
+      <div class="card">
+        <div class="clabel" id="inLabel">Lotin matnni kiriting</div>
+        <textarea id="inp" placeholder="Matnni shu yerga yozing..." rows="5" oninput="onType()"></textarea>
+        <div class="cfoot">
+          <span class="ccount" id="cnt">0 / 3000</span>
+          <button class="cbtn" onclick="clr()">🗑 Tozalash</button>
+        </div>
+      </div>
+      <div class="arrow-row">↓</div>
+      <div class="res-wrap">
+        <div class="res-head">
+          <div class="res-label" id="outLabel">Kirill natija</div>
+          <button class="copy-btn" onclick="copyRes('out')">📋 Nusxa</button>
+        </div>
+        <div class="res-body" id="out"><span class="ph">Natija bu yerda chiqadi…</span></div>
+      </div>
+      <button class="go-btn" id="goBtn" disabled onclick="run()">O'girish</button>
+    </main>
+    <footer>O'zbek alifbosi &nbsp;·&nbsp; <a href="https://t.me/seen_sms" target="_blank">@seen_sms</a></footer>
+  </div>
+  <div class="page" id="page2">
+    <main>
+      <div class="lang-row">
+        <select class="lang-sel" id="fromLang">
+          <option value="auto">🔍 Avtomatik</option>
+          <option value="uz">🇺🇿 O'zbek</option>
+          <option value="ru">🇷🇺 Русский</option>
+          <option value="en">🇺🇸 English</option>
+          <option value="tr">🇹🇷 Türkçe</option>
+          <option value="ar">🇸🇦 العربية</option>
+          <option value="ko">🇰🇷 한국어</option>
+          <option value="zh">🇨🇳 中文</option>
+          <option value="de">🇩🇪 Deutsch</option>
+          <option value="fr">🇫🇷 Français</option>
+          <option value="es">🇪🇸 Español</option>
+          <option value="it">🇮🇹 Italiano</option>
+          <option value="ja">🇯🇵 日本語</option>
+          <option value="kk">🇰🇿 Қазақша</option>
+          <option value="ky">🇰🇬 Кыргызча</option>
+          <option value="tg">🇹🇯 Тоҷикӣ</option>
+          <option value="fa">🇮🇷 فارسی</option>
+          <option value="hi">🇮🇳 हिन्दी</option>
+          <option value="pt">🇵🇹 Português</option>
+          <option value="uk">🇺🇦 Українська</option>
+        </select>
+        <button class="lang-swap" onclick="swapLangs()">⇄</button>
+        <select class="lang-sel" id="toLang">
+          <option value="uz">🇺🇿 O'zbek</option>
+          <option value="ru">🇷🇺 Русский</option>
+          <option value="en" selected>🇺🇸 English</option>
+          <option value="tr">🇹🇷 Türkçe</option>
+          <option value="ar">🇸🇦 العربية</option>
+          <option value="ko">🇰🇷 한국어</option>
+          <option value="zh">🇨🇳 中文</option>
+          <option value="de">🇩🇪 Deutsch</option>
+          <option value="fr">🇫🇷 Français</option>
+          <option value="es">🇪🇸 Español</option>
+          <option value="it">🇮🇹 Italiano</option>
+          <option value="ja">🇯🇵 日本語</option>
+          <option value="kk">🇰🇿 Қазақша</option>
+          <option value="ky">🇰🇬 Кыргызча</option>
+          <option value="tg">🇹🇯 Тоҷикӣ</option>
+          <option value="fa">🇮🇷 فارسی</option>
+          <option value="hi">🇮🇳 हिन्दी</option>
+          <option value="pt">🇵🇹 Português</option>
+          <option value="uk">🇺🇦 Українська</option>
+        </select>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div class="clabel">Matnni kiriting</div>
+          <div class="detect-badge" id="detectedLang" style="display:none"></div>
+        </div>
+        <textarea id="trInp" placeholder="Tarjima qilinadigan matnni yozing..." rows="5" oninput="onTrType()"></textarea>
+        <div class="cfoot">
+          <span class="ccount" id="trCnt">0 / 2000</span>
+          <button class="cbtn" onclick="clrTr()">🗑 Tozalash</button>
+        </div>
+      </div>
+      <div class="arrow-row">↓</div>
+      <div class="res-wrap">
+        <div class="res-head">
+          <div class="res-label">Tarjima natijasi</div>
+          <button class="copy-btn" onclick="copyRes('trOut')">📋 Nusxa</button>
+        </div>
+        <div class="res-body" id="trOut"><span class="ph">Natija bu yerda chiqadi…</span></div>
+      </div>
+      <button class="go-btn" id="trBtn" onclick="translate()" disabled>Tarjima qilish</button>
+    </main>
+    <footer>AI tarjima &nbsp;·&nbsp; <a href="https://t.me/seen_sms" target="_blank">@seen_sms</a></footer>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+var tg=window.Telegram&&window.Telegram.WebApp;
+if(tg){tg.ready();tg.expand();}
+var subPassed=false;
+function openCh(){var u='https://t.me/seen_sms';if(tg)tg.openLink(u);else window.open(u,'_blank');}
+function verify(){
+  var btn=document.getElementById('vBtn');
+  btn.textContent='⏳ Tekshirilmoqda…';
+  btn.style.opacity='0.7';
+  window.setTimeout(function(){
+    subPassed=true;
+    var ov=document.getElementById('overlay');
+    ov.style.opacity='0';
+    window.setTimeout(function(){ov.style.display='none';},400);
+    showToast('✅ Xush kelibsiz!');
+  },800);
+}
+function switchTab(n){
+  for(var i=1;i<=2;i++){
+    document.getElementById('tab'+i).classList.toggle('on',i===n);
+    document.getElementById('page'+i).classList.toggle('on',i===n);
+  }
+}
+var L2K=[["SH","Ш"],["sh","ш"],["CH","Ч"],["ch","ч"],["NG","НГ"],["ng","нг"],["Oʼ","Ў"],["oʼ","ў"],["Gʼ","Ғ"],["gʼ","ғ"],["O'","Ў"],["o'","ў"],["G'","Ғ"],["g'","ғ"],["Oʻ","Ў"],["oʻ","ў"],["Gʻ","Ғ"],["gʻ","ғ"],["\u2018","ъ"],["\u2019","ъ"],["\u02BC","ъ"],["'","ъ"],["`","ъ"],["A","А"],["B","Б"],["D","Д"],["E","Е"],["F","Ф"],["G","Г"],["H","Ҳ"],["I","И"],["J","Ж"],["K","К"],["L","Л"],["M","М"],["N","Н"],["O","О"],["P","П"],["Q","Қ"],["R","Р"],["S","С"],["T","Т"],["U","У"],["V","В"],["X","Х"],["Y","Й"],["Z","З"],["a","а"],["b","б"],["d","д"],["e","е"],["f","ф"],["g","г"],["h","ҳ"],["i","и"],["j","ж"],["k","к"],["l","л"],["m","м"],["n","н"],["o","о"],["p","п"],["q","қ"],["r","р"],["s","с"],["t","т"],["u","у"],["v","в"],["x","х"],["y","й"],["z","з"]];
+var K2L=[["НГ","NG"],["нг","ng"],["А","A"],["Б","B"],["В","V"],["Г","G"],["Д","D"],["Е","E"],["Ё","Yo"],["Ж","J"],["З","Z"],["И","I"],["Й","Y"],["К","K"],["Л","L"],["М","M"],["Н","N"],["О","O"],["П","P"],["Р","R"],["С","S"],["Т","T"],["У","U"],["Ф","F"],["Х","X"],["Ц","Ts"],["Ч","Ch"],["Ш","Sh"],["Щ","Sh"],["Ъ","'"],["Ы","I"],["Ь",""],["Э","E"],["Ю","Yu"],["Я","Ya"],["Ў","Oʻ"],["Қ","Q"],["Ғ","Gʻ"],["Ҳ","H"],["а","a"],["б","b"],["в","v"],["г","g"],["д","d"],["е","e"],["ё","yo"],["ж","j"],["з","z"],["и","i"],["й","y"],["к","k"],["л","l"],["м","m"],["н","n"],["о","o"],["п","p"],["р","r"],["с","s"],["т","t"],["у","u"],["ф","f"],["х","x"],["ц","ts"],["ч","ch"],["ш","sh"],["щ","sh"],["ъ","'"],["ы","i"],["ь",""],["э","e"],["ю","yu"],["я","ya"],["ў","oʻ"],["қ","q"],["ғ","gʻ"],["ҳ","h"]];
+function applyRules(text,rules){var i=0,res='';while(i<text.length){var hit=false;for(var r=0;r<rules.length;r++){var f=rules[r][0],t=rules[r][1];if(f.length>1&&text.substr(i,f.length)===f){res+=t;i+=f.length;hit=true;break;}}if(!hit){var done=false;for(var r=0;r<rules.length;r++){var f=rules[r][0],t=rules[r][1];if(f.length===1&&text[i]===f){res+=t;i++;done=true;break;}}if(!done){res+=text[i];i++;}}}return res;}
+var toLotin=false;
+function swap(){toLotin=!toLotin;document.getElementById('pL').classList.toggle('on',!toLotin);document.getElementById('pK').classList.toggle('on',toLotin);document.getElementById('inLabel').textContent=toLotin?'Kirill matnni kiriting':'Lotin matnni kiriting';document.getElementById('inp').placeholder=toLotin?'Матнни шу ерга ёзинг…':'Matnni shu yerga yozing…';document.getElementById('outLabel').textContent=toLotin?'Lotin natija':'Kirill natija';clr();}
+function onType(){var v=document.getElementById('inp').value;var l=Math.min(v.length,3000);if(v.length>3000)document.getElementById('inp').value=v.slice(0,3000);document.getElementById('cnt').textContent=l+' / 3000';document.getElementById('goBtn').disabled=l===0;if(l>0)run();else resetOut('out');}
+function run(){var raw=document.getElementById('inp').value;if(!raw.trim())return;var result=toLotin?applyRules(raw,K2L):applyRules(raw,L2K);document.getElementById('out').innerHTML=esc(result);}
+function clr(){document.getElementById('inp').value='';document.getElementById('cnt').textContent='0 / 3000';document.getElementById('goBtn').disabled=true;resetOut('out');}
+var LANG_NAMES={auto:'Avtomatik',uz:"O'zbek",ru:'Русский',en:'English',tr:'Türkçe',ar:'العربية',ko:'한국어',zh:'中文',de:'Deutsch',fr:'Français',es:'Español',it:'Italiano',ja:'日本語',kk:'Қазақша',ky:'Кыргызча',tg:'Тоҷикӣ',fa:'فارسی',hi:'हिन्दी',pt:'Português',uk:'Українська'};
+var trTimer=null;
+function swapLangs(){var f=document.getElementById('fromLang');var t=document.getElementById('toLang');if(f.value==='auto')return;var tmp=f.value;f.value=t.value;t.value=tmp;resetOut('trOut');}
+function onTrType(){var v=document.getElementById('trInp').value;var l=Math.min(v.length,2000);if(v.length>2000)document.getElementById('trInp').value=v.slice(0,2000);document.getElementById('trCnt').textContent=l+' / 2000';document.getElementById('trBtn').disabled=l===0;clearTimeout(trTimer);if(l>0){trTimer=setTimeout(translate,900);}else resetOut('trOut');}
+function clrTr(){document.getElementById('trInp').value='';document.getElementById('trCnt').textContent='0 / 2000';document.getElementById('trBtn').disabled=true;document.getElementById('detectedLang').style.display='none';resetOut('trOut');}
+function translate(){var text=document.getElementById('trInp').value.trim();if(!text)return;var from=document.getElementById('fromLang').value;var to=document.getElementById('toLang').value;if(from!=='auto'&&from===to){document.getElementById('trOut').innerHTML=esc(text);return;}var fromName=LANG_NAMES[from]||from;var toName=LANG_NAMES[to]||to;var btn=document.getElementById('trBtn');btn.innerHTML='<span class="spinner"></span>Tarjima…';btn.disabled=true;document.getElementById('trOut').innerHTML='<span class="ph">Tarjima qilinmoqda…</span>';var prompt=from==='auto'?'Translate the following text to '+toName+'. Respond with ONLY the translated text, nothing else:\n\n'+text:'Translate the following text from '+fromName+' to '+toName+'. Respond with ONLY the translated text, nothing else:\n\n'+text;fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system:'You are a professional translator. Return ONLY the translated text.',messages:[{role:'user',content:prompt}]})}).then(function(r){return r.json();}).then(function(data){var result=data.content&&data.content.map(function(b){return b.text||'';}).join('')||'Xato yuz berdi.';document.getElementById('trOut').innerHTML=esc(result.trim());btn.innerHTML='Tarjima qilish';btn.disabled=false;}).catch(function(){document.getElementById('trOut').innerHTML='<span style="color:var(--red)">❌ Xato. Qayta urining.</span>';btn.innerHTML='Tarjima qilish';btn.disabled=false;});}
+function resetOut(id){document.getElementById(id).innerHTML='<span class="ph">Natija bu yerda chiqadi…</span>';}
+function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+function copyRes(id){var el=document.getElementById(id);var txt=el.innerText.trim();if(!txt||txt.indexOf('Natija')===0||txt.indexOf('Tarjima')===0)return;if(navigator.clipboard){navigator.clipboard.writeText(txt).then(function(){showToast('📋 Nusxa olindi!');});}else{showToast('❌ Nusxa olishda xato');}}
+function showToast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('on');setTimeout(function(){el.classList.remove('on');},2200);}
+</script>
+</body>
+</html>
